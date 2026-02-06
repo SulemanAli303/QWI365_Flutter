@@ -47,6 +47,7 @@ class SitesScreen extends StatelessWidget {
                 children: [
                   _buildDateDisplay(controller),
                   _buildMapPreview(controller),
+                  _buildRiskTiles(controller),
                   const SizedBox(height: 15),
                   ...controller.categories.asMap().entries.map((entry) {
                     return _buildCategoryItem(entry.value, entry.key);
@@ -67,7 +68,6 @@ class SitesScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         children: [
-          // Left Arrow Button
           Obx(
             () => GestureDetector(
               onTap: controller.selectedIndex.value > 0
@@ -94,7 +94,6 @@ class SitesScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Center Site Selector / Dropdown
           Expanded(
             child: Obx(
               () => Container(
@@ -121,7 +120,7 @@ class SitesScreen extends StatelessWidget {
                         child: Text(
                           entry.value.siteName,
                           style: const TextStyle(
-                            color: Colors.black, // Items in list are black
+                            color: Colors.black,
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
                           ),
@@ -134,7 +133,6 @@ class SitesScreen extends StatelessWidget {
                       }
                     },
                     selectedItemBuilder: (context) {
-                      // The text on the tile itself is WHITE in the screenshot
                       return controller.sites.map((site) {
                         return Align(
                           alignment: Alignment.centerLeft,
@@ -155,7 +153,6 @@ class SitesScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Right Arrow Button
           Obx(
             () => GestureDetector(
               onTap:
@@ -235,6 +232,105 @@ class SitesScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  Widget _buildRiskTiles(SitesController controller) {
+    return Obx(() {
+      final risk = controller.selectedRisk;
+      if (risk == null) {
+        if (controller.isDataLoading.value) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primaryOrange),
+            ),
+          );
+        }
+        return const SizedBox();
+      }
+
+      return Padding(
+        padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _buildRiskTile(
+                    "Water Portability",
+                    risk.portabilityPercentage,
+                    _getRiskColor(risk.overallRisk),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildRiskTile(
+                    "Water Contamination",
+                    risk.contaminationPercentage,
+                    _getRiskColor(risk.overallRisk),
+                    isContamination: true,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Color _getRiskColor(String risk) {
+    if (risk == "RED") return const Color(0xFFFF0000);
+    if (risk == "YELLOW") return const Color(0xFFEFFF00);
+    return const Color(0xFF33D940);
+  }
+
+  Widget _buildRiskTile(
+    String title,
+    double percentage,
+    Color color, {
+    bool isContamination = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 65,
+                height: 65,
+                child: CircularProgressIndicator(
+                  value: percentage / 100,
+                  backgroundColor: Colors.white12,
+                  color: color,
+                  strokeWidth: 7,
+                ),
+              ),
+              Text(
+                "${percentage.round()}%",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildCategoryItem(String title, int index) {
