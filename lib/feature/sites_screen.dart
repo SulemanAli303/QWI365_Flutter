@@ -139,7 +139,7 @@ class SitesScreen extends StatelessWidget {
                           child: Text(
                             site.siteName,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontSize: 15,
                               fontWeight: FontWeight.w400,
                             ),
@@ -208,8 +208,14 @@ class SitesScreen extends StatelessWidget {
         height: 180,
         margin: const EdgeInsets.symmetric(horizontal: 15),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.white24, width: 1),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(5, 5),
+            ),
+          ],
         ),
         clipBehavior: Clip.antiAlias,
         child: GoogleMap(
@@ -358,6 +364,11 @@ class SitesScreen extends StatelessWidget {
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
+        ),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          color: Colors.white,
+          size: 15,
         ),
         onTap: () {
           final controller = Get.find<SitesController>();
