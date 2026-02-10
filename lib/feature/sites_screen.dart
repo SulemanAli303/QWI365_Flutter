@@ -316,7 +316,6 @@ class SitesScreen extends StatelessWidget {
                   const SizedBox(height: 15),
                   const Text(
                     "Water Contamination Risk indicates the level of pollutants, microorganisms, and harmful chemicals detected. Higher percentages suggest a higher presence of substances that may compromise water safety.",
-                    textAlign: TextAlign.justify,
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],
@@ -360,7 +359,6 @@ class SitesScreen extends StatelessWidget {
                   const SizedBox(height: 15),
                   const Text(
                     "Water potability is in absence any metal contamination,  microorgnisms and minor passing of harmless physical parameters. Higher the percentage better is potability.",
-                    textAlign: TextAlign.justify,
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],
