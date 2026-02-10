@@ -266,6 +266,7 @@ class SitesScreen extends StatelessWidget {
                     "Water Portability",
                     risk.portabilityPercentage,
                     _getRiskColor(risk.overallRisk),
+                    isPortability: true,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -293,25 +294,87 @@ class SitesScreen extends StatelessWidget {
 
   void _showContaminationInfo() {
     Get.dialog(
-      AlertDialog(
+      Dialog(
         backgroundColor: AppColors.backgroundColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: const Text(
-          "Water Contamination Risk",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Water Contamination Risk",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  const Text(
+                    "Water Contamination Risk indicates the level of pollutants, microorganisms, and harmful chemicals detected. Higher percentages suggest a higher presence of substances that may compromise water safety.",
+                    textAlign: TextAlign.justify,
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 5,
+              top: 5,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white70, size: 25),
+                onPressed: () => Get.back(),
+              ),
+            ),
+          ],
         ),
-        content: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: const Text(
-            "Water Contamination Risk indicates the level of pollutants, microorganisms, and harmful chemicals detected. Higher percentages suggest a higher presence of substances that may compromise water safety.",
-            textAlign: TextAlign.justify,
-            style: TextStyle(color: Colors.white70, fontSize: 14),
-          ),
+      ),
+    );
+  }
+
+  void _showPortabilityInfo() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: AppColors.backgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Water Portability",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  const Text(
+                    "Water potability is in absence any metal contamination,  microorgnisms and minor passing of harmless physical parameters. Higher the percentage better is potability.",
+                    textAlign: TextAlign.justify,
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 5,
+              top: 5,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white70, size: 25),
+                onPressed: () => Get.back(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -322,6 +385,7 @@ class SitesScreen extends StatelessWidget {
     double percentage,
     Color color, {
     bool isContamination = false,
+    bool isPortability = false,
   }) {
     return Container(
       height: 140,
@@ -336,9 +400,9 @@ class SitesScreen extends StatelessWidget {
           if (isContamination)
             Column(
               children: [
-                const Text(
+                Text(
                   "Water Contamination",
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -350,6 +414,32 @@ class SitesScreen extends StatelessWidget {
                     const SizedBox(width: 4),
                     GestureDetector(
                       onTap: _showContaminationInfo,
+                      child: const Icon(
+                        Icons.info_outline,
+                        color: Colors.white70,
+                        size: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          else if (isPortability)
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Water Portability",
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: _showPortabilityInfo,
                       child: const Icon(
                         Icons.info_outline,
                         color: Colors.white70,
