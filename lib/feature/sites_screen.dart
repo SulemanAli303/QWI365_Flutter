@@ -291,6 +291,32 @@ class SitesScreen extends StatelessWidget {
     return const Color(0xFF33D940);
   }
 
+  void _showContaminationInfo() {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: AppColors.backgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text(
+          "Water Contamination Risk",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: const Text(
+            "Water Contamination Risk indicates the level of pollutants, microorganisms, and harmful chemicals detected. Higher percentages suggest a higher presence of substances that may compromise water safety.",
+            textAlign: TextAlign.justify,
+            style: TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildRiskTile(
     String title,
     double percentage,
@@ -298,6 +324,7 @@ class SitesScreen extends StatelessWidget {
     bool isContamination = false,
   }) {
     return Container(
+      height: 140,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
@@ -306,11 +333,39 @@ class SitesScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
-            title,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          const SizedBox(height: 10),
+          if (isContamination)
+            Column(
+              children: [
+                const Text(
+                  "Water Contamination",
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "Risk",
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: _showContaminationInfo,
+                      child: const Icon(
+                        Icons.info_outline,
+                        color: Colors.white70,
+                        size: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          else
+            Text(
+              title,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          const SizedBox(height: 15),
           Stack(
             alignment: Alignment.center,
             children: [
