@@ -17,8 +17,12 @@ class ParamsScreen extends StatelessWidget {
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         title: Text(
-          controller.paramName.toLowerCase().split(' ').map((word) => word[0].toUpperCase() + word.substring(1)).join(' '), 
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400)
+          controller.paramName
+              .toLowerCase()
+              .split(' ')
+              .map((word) => word[0].toUpperCase() + word.substring(1))
+              .join(' '),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -39,15 +43,20 @@ class ParamsScreen extends StatelessWidget {
           children: [
             _buildSummaryHeader(controller),
             Expanded(
-              child: controller.parameters.isEmpty 
-                ? const Center(child: Text("No records found", style: TextStyle(color: Colors.grey)))
-                : ListView.builder(
-                    padding: const EdgeInsets.only(top: 10, bottom: 20),
-                    itemCount: controller.parameters.length,
-                    itemBuilder: (context, index) {
-                      return _buildParameterRow(controller.parameters[index]);
-                    },
-                  ),
+              child: controller.parameters.isEmpty
+                  ? const Center(
+                      child: Text(
+                        "No records found",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(top: 10, bottom: 20),
+                      itemCount: controller.parameters.length,
+                      itemBuilder: (context, index) {
+                        return _buildParameterRow(controller.parameters[index]);
+                      },
+                    ),
             ),
           ],
         );
@@ -61,7 +70,7 @@ class ParamsScreen extends StatelessWidget {
 
     String displayTime = "00:00 AM";
     String displayDate = "01 Jan 2024";
-    
+
     try {
       if (controller.site.lastUpdate.isNotEmpty) {
         DateTime dt = DateTime.parse(controller.site.lastUpdate);
@@ -95,14 +104,14 @@ class ParamsScreen extends StatelessWidget {
             children: [
               Text(
                 displayTime,
-                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w400),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
               const SizedBox(width: 20),
-              Container(
-                height: 50,
-                width: 1.5,
-                color: Colors.white70,
-              ),
+              Container(height: 50, width: 1.5, color: Colors.white70),
               const SizedBox(width: 20),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,11 +123,18 @@ class ParamsScreen extends StatelessWidget {
                   const SizedBox(height: 5),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: Colors.white70, size: 14),
+                      const Icon(
+                        Icons.location_on,
+                        color: Colors.white70,
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         controller.site.siteName,
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -150,11 +166,11 @@ class ParamsScreen extends StatelessWidget {
   Widget _buildParameterRow(ParameterData data) {
     Color dotColor;
     if (data.status == WaterQualityStatus.good)
-      dotColor = const Color(0xFF33D940);
+      dotColor = AppColors.dotGreen;
     else if (data.status == WaterQualityStatus.warning)
-      dotColor = const Color(0xFFEFFF00);
+      dotColor = AppColors.dotYellow;
     else
-      dotColor = const Color(0xFFFF0000);
+      dotColor = AppColors.dotRed;
 
     return InkWell(
       onTap: () => _showHistoryChart(data),
@@ -166,7 +182,11 @@ class ParamsScreen extends StatelessWidget {
               flex: 5,
               child: Text(
                 data.name,
-                style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w400),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ),
             SizedBox(
@@ -175,7 +195,10 @@ class ParamsScreen extends StatelessWidget {
                 child: Container(
                   width: 16,
                   height: 16,
-                  decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ),
@@ -225,10 +248,28 @@ class ParamsScreen extends StatelessWidget {
                   gridData: const FlGridData(show: false),
                   titlesData: FlTitlesData(
                     show: true,
-                    bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, getTitlesWidget: (val, _) => Text(val.toStringAsFixed(1), style: const TextStyle(color: Colors.white, fontSize: 10)))),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        getTitlesWidget: (val, _) => Text(
+                          val.toStringAsFixed(1),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                   borderData: FlBorderData(show: false),
                   lineBarsData: [

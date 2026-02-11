@@ -47,6 +47,7 @@ class SitesScreen extends StatelessWidget {
                 children: [
                   _buildDateDisplay(controller),
                   _buildMapPreview(controller),
+                  _buildRiskTiles(controller),
                   const SizedBox(height: 15),
                   ...controller.categories.asMap().entries.map((entry) {
                     return _buildCategoryItem(entry.value, entry.key);
@@ -67,7 +68,6 @@ class SitesScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         children: [
-          // Left Arrow Button
           Obx(
             () => GestureDetector(
               onTap: controller.selectedIndex.value > 0
@@ -94,7 +94,6 @@ class SitesScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Center Site Selector / Dropdown
           Expanded(
             child: Obx(
               () => Container(
@@ -121,7 +120,7 @@ class SitesScreen extends StatelessWidget {
                         child: Text(
                           entry.value.siteName,
                           style: const TextStyle(
-                            color: Colors.black, // Items in list are black
+                            color: Colors.black,
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
                           ),
@@ -134,14 +133,13 @@ class SitesScreen extends StatelessWidget {
                       }
                     },
                     selectedItemBuilder: (context) {
-                      // The text on the tile itself is WHITE in the screenshot
                       return controller.sites.map((site) {
                         return Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             site.siteName,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontSize: 15,
                               fontWeight: FontWeight.w400,
                             ),
@@ -155,7 +153,6 @@ class SitesScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Right Arrow Button
           Obx(
             () => GestureDetector(
               onTap:
@@ -211,8 +208,14 @@ class SitesScreen extends StatelessWidget {
         height: 180,
         margin: const EdgeInsets.symmetric(horizontal: 15),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.white24, width: 1),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(5, 5),
+            ),
+          ],
         ),
         clipBehavior: Clip.antiAlias,
         child: GoogleMap(
@@ -235,6 +238,248 @@ class SitesScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  Widget _buildRiskTiles(SitesController controller) {
+    return Obx(() {
+      final risk = controller.selectedRisk;
+      if (risk == null) {
+        if (controller.isDataLoading.value) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primaryOrange),
+            ),
+          );
+        }
+        return const SizedBox();
+      }
+
+      return Padding(
+        padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _buildRiskTile(
+                    "Water Portability",
+                    risk.portabilityPercentage,
+                    _getRiskColor(risk.overallRisk),
+                    isPortability: true,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildRiskTile(
+                    "Water Contamination",
+                    risk.contaminationPercentage,
+                    _getRiskColor(risk.overallRisk),
+                    isContamination: true,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Color _getRiskColor(String risk) {
+    if (risk == "RED") return const Color(0xFFFF0000);
+    if (risk == "YELLOW") return const Color(0xFFEFFF00);
+    return const Color(0xFF33D940);
+  }
+
+  void _showContaminationInfo() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: AppColors.backgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Water Contamination Risk",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  const Text(
+                    "Water Contamination Risk indicates the level of pollutants, microorganisms, and harmful chemicals detected. Higher percentages suggest a higher presence of substances that may compromise water safety.",
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 5,
+              top: 5,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white70, size: 25),
+                onPressed: () => Get.back(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPortabilityInfo() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: AppColors.backgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Water Portability",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  const Text(
+                    "Water potability is in absence any metal contamination,  microorgnisms and minor passing of harmless physical parameters. Higher the percentage better is potability.",
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 5,
+              top: 5,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white70, size: 25),
+                onPressed: () => Get.back(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRiskTile(
+    String title,
+    double percentage,
+    Color color, {
+    bool isContamination = false,
+    bool isPortability = false,
+  }) {
+    return Container(
+      height: 140,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        children: [
+          if (isContamination)
+            Column(
+              children: [
+                Text(
+                  "Water Contamination",
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "Risk",
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: _showContaminationInfo,
+                      child: const Icon(
+                        Icons.info_outline,
+                        color: Colors.white70,
+                        size: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          else if (isPortability)
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Water Portability",
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: _showPortabilityInfo,
+                      child: const Icon(
+                        Icons.info_outline,
+                        color: Colors.white70,
+                        size: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          else
+            Text(
+              title,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          const SizedBox(height: 15),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 65,
+                height: 65,
+                child: CircularProgressIndicator(
+                  value: percentage / 100,
+                  backgroundColor: Colors.white12,
+                  color: color,
+                  strokeWidth: 7,
+                ),
+              ),
+              Text(
+                "${percentage.round()}%",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildCategoryItem(String title, int index) {
@@ -262,6 +507,11 @@ class SitesScreen extends StatelessWidget {
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
+        ),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          color: Colors.white,
+          size: 15,
         ),
         onTap: () {
           final controller = Get.find<SitesController>();
