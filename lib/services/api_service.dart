@@ -1,8 +1,13 @@
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String baseUrl = "https://carbon.expert365.com.au/Aqua365.asmx";
+
+  Future<SharedPreferences> getPrefs() async {
+    return await SharedPreferences.getInstance();
+  }
 
   Future<String?> soapRequest({
     required String operation,
@@ -24,7 +29,7 @@ class ApiService {
         headers: {
           "Content-Type": "text/xml; charset=utf-8",
           "SOAPAction": "http://tempuri.org/$operation",
-          "Host": "db.sansoftwares.com", // Keeping this from Swift code
+          "Host": "carbon.expert365.com.au",
         },
         body: soapMessage,
       );

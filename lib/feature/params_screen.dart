@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:water365/controllers/params_controller.dart';
+import 'package:water365/controllers/sites_controller.dart';
 import 'package:water365/utils/app_colors.dart';
 import 'package:water365/utils/water_quality_calculator.dart';
 import 'package:intl/intl.dart';
@@ -33,7 +34,9 @@ class ParamsScreen extends StatelessWidget {
         ),
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        final sitesController = Get.find<SitesController>();
+        if (sitesController.isDataLoading.value &&
+            controller.parameters.isEmpty) {
           return const Center(
             child: CircularProgressIndicator(color: AppColors.primaryOrange),
           );
@@ -164,6 +167,7 @@ class ParamsScreen extends StatelessWidget {
   }
 
   Widget _buildParameterRow(ParameterData data) {
+    final controller = Get.find<ParamsController>();
     Color dotColor;
     if (data.status == WaterQualityStatus.good)
       dotColor = AppColors.dotGreen;
@@ -173,7 +177,10 @@ class ParamsScreen extends StatelessWidget {
       dotColor = AppColors.dotRed;
 
     return InkWell(
-      onTap: () => _showHistoryChart(data),
+      onTap: () {
+        controller.fetchHistory(data.key);
+        _showHistoryChart(data);
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
         child: Row(
@@ -223,6 +230,7 @@ class ParamsScreen extends StatelessWidget {
   }
 
   void _showHistoryChart(ParameterData data) {
+    final controller = Get.find<ParamsController>();
     Get.bottomSheet(
       Container(
         height: 350,
@@ -243,54 +251,69 @@ class ParamsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             Expanded(
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+              child: Obx(() {
+                if (controller.isHistoryLoading.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryOrange,
                     ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                        getTitlesWidget: (val, _) => Text(
-                          val.toStringAsFixed(1),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
+                  );
+                }
+
+                if (controller.historyPoints.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      "No historical data found",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  );
+                }
+
+                return LineChart(
+                  LineChartData(
+                    gridData: const FlGridData(show: false),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (val, _) => Text(
+                            val.toStringAsFixed(1),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
                           ),
                         ),
                       ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                     ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
+                    borderData: FlBorderData(show: false),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: controller.historyPoints,
+                        isCurved: true,
+                        color: AppColors.primaryOrange,
+                        barWidth: 3,
+                        dotData: const FlDotData(show: true),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: AppColors.primaryOrange.withOpacity(0.1),
+                        ),
+                      ),
+                    ],
                   ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: [
-                        const FlSpot(0, 1),
-                        const FlSpot(1, 1.5),
-                        const FlSpot(2, 1.4),
-                        const FlSpot(3, 1.8),
-                        const FlSpot(4, 2),
-                        const FlSpot(5, 2.2),
-                        const FlSpot(6, 1.8),
-                      ],
-                      isCurved: true,
-                      color: AppColors.primaryOrange,
-                      barWidth: 3,
-                      dotData: const FlDotData(show: true),
-                    ),
-                  ],
-                ),
-              ),
+                );
+              }),
             ),
           ],
         ),
