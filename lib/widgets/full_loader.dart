@@ -32,7 +32,7 @@ class _CustomFullLoaderState extends State<CustomFullLoader>
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white.withOpacity(0.05),
+      color: Colors.white.withValues(alpha: 0.05),
       width: double.infinity,
       height: double.infinity,
       child: Center(

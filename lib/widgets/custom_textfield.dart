@@ -39,7 +39,7 @@ class CustomTextField extends StatelessWidget {
           ),
           hintText: hintText,
           hintStyle: TextStyle(
-            color: AppColors.textColor.withOpacity(0.5),
+            color: AppColors.textColor.withValues(alpha: 0.5),
             fontSize: 14,
           ),
           border: InputBorder.none,

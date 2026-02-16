@@ -46,10 +46,12 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to location when open to show your current position on the water quality map.</string>
+	<string>Water365 needs access to location when open to show your current position on the water quality map.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs access to location to show your current position on the water quality map.</string>
+	<string>Water365 needs access to location to show your current position on the water quality map.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs access to location to show your current position on the water quality map.</string>
+	<string>Water365 needs access to location to show your current position on the water quality map.</string>
+	<key>UIUserInterfaceStyle</key>
+	<string>Dark</string>
 </dict>
 </plist>

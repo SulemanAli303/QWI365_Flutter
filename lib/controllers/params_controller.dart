@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'package:water365/controllers/sites_controller.dart';
@@ -27,12 +28,20 @@ class ParamsController extends GetxController {
   final isHistoryLoading = false.obs;
   final parameters = <ParameterData>[].obs;
   final historyPoints = <FlSpot>[].obs;
+  final historyDates = <String>[].obs; // Store formatted dates for X-axis
   final assessment = Rxn<WaterQualityAssessment>();
+
+  // Chart zoom state
+  final minX = 0.0.obs;
+  final maxX = 0.0.obs;
+  final minY = 0.0.obs;
+  final maxY = 0.0.obs;
 
   late Site site;
   late String paramName;
 
   final _historyCache = <String, List<FlSpot>>{};
+  final _historyDatesCache = <String, List<String>>{}; // Cache dates too
 
   @override
   void onInit() {
@@ -112,7 +121,7 @@ class ParamsController extends GetxController {
 
       _processData(displayData);
     } catch (e) {
-      print("Error loading parameters: $e");
+     debugPrint("Error loading parameters: $e");
     }
   }
 
@@ -177,14 +186,26 @@ class ParamsController extends GetxController {
     final cacheKey = "${site.siteName}_$paramKey";
 
     // Use cached data if available to avoid "itna loader"
-    if (_historyCache.containsKey(cacheKey)) {
+    if (_historyCache.containsKey(cacheKey) && _historyDatesCache.containsKey(cacheKey)) {
       historyPoints.value = _historyCache[cacheKey]!;
+      historyDates.value = _historyDatesCache[cacheKey]!;
+
+      // Initialize chart zoom ranges for cached data
+      if (historyPoints.isNotEmpty) {
+        minX.value = historyPoints.first.x;
+        maxX.value = historyPoints.last.x;
+        final yValues = historyPoints.map((e) => e.y).toList();
+        minY.value = yValues.reduce((a, b) => a < b ? a : b) * 0.9;
+        maxY.value = yValues.reduce((a, b) => a > b ? a : b) * 1.1;
+      }
+
       isHistoryLoading.value = false;
       return;
     }
 
     isHistoryLoading.value = true;
     historyPoints.clear();
+    historyDates.clear();
     try {
       final sitesController = Get.find<SitesController>();
       final prefs = await sitesController.apiService.getPrefs();
@@ -216,6 +237,7 @@ class ParamsController extends GetxController {
         if (jsonStr != "[]") {
           final List<dynamic> dataList = json.decode(jsonStr);
           final List<FlSpot> points = [];
+          final List<String> dates = [];
 
           final reversedList = dataList.reversed.toList();
 
@@ -225,14 +247,39 @@ class ParamsController extends GetxController {
             );
             if (val != null) {
               points.add(FlSpot(i.toDouble(), val));
+
+              // Try to get timestamp from data
+              String timeLabel = "";
+              if (reversedList[i].containsKey('Last_Update')) {
+                try {
+                  final dt = DateTime.parse(reversedList[i]['Last_Update']);
+                  timeLabel = DateFormat('HH:mm').format(dt);
+                } catch (_) {
+                  timeLabel = "${i + 1}";
+                }
+              } else {
+                timeLabel = "${i + 1}";
+              }
+              dates.add(timeLabel);
             }
           }
           _historyCache[cacheKey] = points;
+          _historyDatesCache[cacheKey] = dates;
           historyPoints.value = points;
+          historyDates.value = dates;
+
+          // Initialize chart zoom ranges
+          if (points.isNotEmpty) {
+            minX.value = points.first.x;
+            maxX.value = points.last.x;
+            final yValues = points.map((e) => e.y).toList();
+            minY.value = yValues.reduce((a, b) => a < b ? a : b) * 0.9;
+            maxY.value = yValues.reduce((a, b) => a > b ? a : b) * 1.1;
+          }
         }
       }
     } catch (e) {
-      print("Error fetching history for $paramKey: $e");
+     debugPrint("Error fetching history for $paramKey: $e");
     } finally {
       isHistoryLoading.value = false;
     }
@@ -268,6 +315,16 @@ class ParamsController extends GetxController {
         return "Arsenic";
       default:
         return key.replaceAll("_", " ");
+    }
+  }
+
+  void resetZoom() {
+    if (historyPoints.isNotEmpty) {
+      minX.value = historyPoints.first.x;
+      maxX.value = historyPoints.last.x;
+      final yValues = historyPoints.map((e) => e.y).toList();
+      minY.value = yValues.reduce((a, b) => a < b ? a : b) * 0.9;
+      maxY.value = yValues.reduce((a, b) => a > b ? a : b) * 1.1;
     }
   }
 
