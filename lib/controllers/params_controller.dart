@@ -121,7 +121,7 @@ class ParamsController extends GetxController {
 
       _processData(displayData);
     } catch (e) {
-     debugPrint("Error loading parameters: $e");
+      debugPrint("Error loading parameters: $e");
     }
   }
 
@@ -186,7 +186,8 @@ class ParamsController extends GetxController {
     final cacheKey = "${site.siteName}_$paramKey";
 
     // Use cached data if available to avoid "itna loader"
-    if (_historyCache.containsKey(cacheKey) && _historyDatesCache.containsKey(cacheKey)) {
+    if (_historyCache.containsKey(cacheKey) &&
+        _historyDatesCache.containsKey(cacheKey)) {
       historyPoints.value = _historyCache[cacheKey]!;
       historyDates.value = _historyDatesCache[cacheKey]!;
 
@@ -248,17 +249,86 @@ class ParamsController extends GetxController {
             if (val != null) {
               points.add(FlSpot(i.toDouble(), val));
 
-              // Try to get timestamp from data
+              // Try to get timestamp from data with multiple fallbacks
               String timeLabel = "";
-              if (reversedList[i].containsKey('Last_Update')) {
-                try {
-                  final dt = DateTime.parse(reversedList[i]['Last_Update']);
-                  timeLabel = DateFormat('HH:mm').format(dt);
-                } catch (_) {
-                  timeLabel = "${i + 1}";
+              final item = reversedList[i];
+              String? rawDate =
+                  item['Last_Update']?.toString() ??
+                  item['Date']?.toString() ??
+                  item['date']?.toString() ??
+                  item['dat']?.toString() ??
+                  item['Dat']?.toString() ??
+                  item['DAT']?.toString() ??
+                  item['DateTime']?.toString() ??
+                  item['Time']?.toString() ??
+                  item['time']?.toString();
+
+              if (rawDate != null && rawDate.isNotEmpty) {
+                DateTime? dt;
+
+                // Try several parsing formats
+                final formats = [
+                  null, // ISO 8601
+                  'dd/MM/yyyy HH:mm:ss',
+                  'dd/MM/yyyy HH:mm',
+                  'dd/MM/yyyy h:mm a', // Added common format
+                  'dd-MM-yyyy HH:mm:ss',
+                  'dd-MM-yyyy HH:mm',
+                  'dd/MMM/yyyy HH:mm:ss',
+                  'dd-MMM-yyyy HH:mm',
+                  'yyyy-MM-dd HH:mm:ss',
+                ];
+
+                for (var format in formats) {
+                  try {
+                    if (format == null) {
+                      dt = DateTime.parse(rawDate);
+                    } else {
+                      dt = DateFormat(format).parse(rawDate);
+                    }
+                    break; // Removed null check to satisfy lint
+                  } catch (_) {}
                 }
-              } else {
-                timeLabel = "${i + 1}";
+
+                if (dt != null) {
+                  timeLabel = DateFormat('H:mm').format(dt);
+                } else {
+                  // CRITICAL FALLBACK: If parsing failed, try to find a time pattern (XX:XX) in the raw string
+                  final timeRegex = RegExp(r'(\d{1,2}:\d{2})');
+                  final match = timeRegex.firstMatch(rawDate);
+                  if (match != null) {
+                    timeLabel = match.group(1)!;
+                    // Remove leading zero if needed to match "0:00" style instead of "00:00"
+                    if (timeLabel.startsWith('0') && timeLabel.length > 4) {
+                      timeLabel = timeLabel.substring(1);
+                    }
+                  } else {
+                    timeLabel = rawDate.split(' ').last;
+                    if (timeLabel.length > 5)
+                      timeLabel = timeLabel.substring(0, 5);
+                  }
+                }
+              }
+
+              // If it's still empty or just a number, we try a different key
+              if (timeLabel.isEmpty || RegExp(r'^\d+$').hasMatch(timeLabel)) {
+                // Check every key in the item for a ':' which usually indicates time
+                for (var key in item.keys) {
+                  final valStr = item[key].toString();
+                  if (valStr.contains(':')) {
+                    final timeRegex = RegExp(r'(\d{1,2}:\d{2})');
+                    final match = timeRegex.firstMatch(valStr);
+                    if (match != null) {
+                      timeLabel = match.group(1)!;
+                      break;
+                    }
+                  }
+                }
+              }
+
+              // Final desperate fallback if nothing worked
+              if (timeLabel.isEmpty) {
+                timeLabel = "0:00"; // Default instead of index
               }
               dates.add(timeLabel);
             }
@@ -279,7 +349,7 @@ class ParamsController extends GetxController {
         }
       }
     } catch (e) {
-     debugPrint("Error fetching history for $paramKey: $e");
+      debugPrint("Error fetching history for $paramKey: $e");
     } finally {
       isHistoryLoading.value = false;
     }

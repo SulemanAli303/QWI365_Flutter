@@ -430,10 +430,7 @@ class SitesScreen extends StatelessWidget {
                   children: [
                     Text(
                       "Water Portability",
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: Colors.black, fontSize: 12),
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
