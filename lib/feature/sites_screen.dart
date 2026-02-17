@@ -211,7 +211,7 @@ class SitesScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black..withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(5, 5),
             ),
@@ -389,7 +389,7 @@ class SitesScreen extends StatelessWidget {
       height: 140,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white..withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.white10),
       ),
@@ -400,21 +400,21 @@ class SitesScreen extends StatelessWidget {
               children: [
                 Text(
                   "Water Contamination",
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: const TextStyle(color: Colors.black, fontSize: 12),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
                       "Risk",
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      style: TextStyle(color: Colors.black, fontSize: 12),
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
                       onTap: _showContaminationInfo,
                       child: const Icon(
                         Icons.info_outline,
-                        color: Colors.white70,
+                        color: Colors.black,
                         size: 14,
                       ),
                     ),
@@ -430,17 +430,14 @@ class SitesScreen extends StatelessWidget {
                   children: [
                     Text(
                       "Water Portability",
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: Colors.black, fontSize: 12),
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
                       onTap: _showPortabilityInfo,
                       child: const Icon(
                         Icons.info_outline,
-                        color: Colors.white70,
+                        color: Colors.black,
                         size: 14,
                       ),
                     ),
@@ -451,7 +448,7 @@ class SitesScreen extends StatelessWidget {
           else
             Text(
               title,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              style: const TextStyle(color: Colors.black, fontSize: 12),
             ),
           const SizedBox(height: 15),
           Stack(
@@ -470,7 +467,7 @@ class SitesScreen extends StatelessWidget {
               Text(
                 "${percentage.round()}%",
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Colors.black,
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                 ),

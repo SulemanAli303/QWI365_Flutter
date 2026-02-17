@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:water365/controllers/params_controller.dart';
+import 'package:water365/controllers/sites_controller.dart';
 import 'package:water365/utils/app_colors.dart';
 import 'package:water365/utils/water_quality_calculator.dart';
 import 'package:intl/intl.dart';
@@ -33,7 +34,9 @@ class ParamsScreen extends StatelessWidget {
         ),
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        final sitesController = Get.find<SitesController>();
+        if (sitesController.isDataLoading.value &&
+            controller.parameters.isEmpty) {
           return const Center(
             child: CircularProgressIndicator(color: AppColors.primaryOrange),
           );
@@ -144,7 +147,7 @@ class ParamsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 25),
           Text(
-            "Conformance to BIS Specification IS10500: ${assessment.conformancePercentage.toStringAsFixed(1)}%",
+            "Conformance to BIS Specification IS10500: ${assessment.conformancePercentage.toStringAsFixed(2)}%",
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
@@ -164,6 +167,7 @@ class ParamsScreen extends StatelessWidget {
   }
 
   Widget _buildParameterRow(ParameterData data) {
+    final controller = Get.find<ParamsController>();
     Color dotColor;
     if (data.status == WaterQualityStatus.good)
       dotColor = AppColors.dotGreen;
@@ -173,7 +177,10 @@ class ParamsScreen extends StatelessWidget {
       dotColor = AppColors.dotRed;
 
     return InkWell(
-      onTap: () => _showHistoryChart(data),
+      onTap: () {
+        controller.fetchHistory(data.key);
+        _showHistoryChart(data);
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
         child: Row(
@@ -223,78 +230,352 @@ class ParamsScreen extends StatelessWidget {
   }
 
   void _showHistoryChart(ParameterData data) {
+    final controller = Get.find<ParamsController>();
     Get.bottomSheet(
-      Container(
-        height: 350,
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: AppColors.backgroundColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Text(
-              "${data.name} History",
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 30),
-            Expanded(
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+      PopScope(
+        canPop: false, // Prevent back button dismissal
+        child: Container(
+          height: 450,
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: AppColors.backgroundColor,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(width: 40),
+                  Expanded(
+                    child: Text(
+                      "${data.name} History",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                        getTitlesWidget: (val, _) => Text(
-                          val.toStringAsFixed(1),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    onPressed: () => Get.back(),
+                  ),
+                ],
+              ),
+              Expanded(child: _ChartGestureWrapper(controller: controller)),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+      isDismissible: false, // Prevent swipe down dismissal
+      enableDrag: false, // Prevent drag to dismiss
+    );
+  }
+}
+
+class _ChartGestureWrapper extends StatefulWidget {
+  final ParamsController controller;
+
+  const _ChartGestureWrapper({required this.controller});
+
+  @override
+  State<_ChartGestureWrapper> createState() => _ChartGestureWrapperState();
+}
+
+class _ChartGestureWrapperState extends State<_ChartGestureWrapper> {
+  double _baseScale = 1.0;
+  bool _isMultiTouch = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (widget.controller.isHistoryLoading.value) {
+        return const Center(
+          child: CircularProgressIndicator(color: AppColors.primaryOrange),
+        );
+      }
+
+      if (widget.controller.historyPoints.isEmpty) {
+        return const Center(
+          child: Text(
+            "No historical data found",
+            style: TextStyle(color: Colors.grey),
+          ),
+        );
+      }
+
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque, // Capture all gestures in the area
+        onScaleStart: (details) {
+          _baseScale = 1.0;
+          _isMultiTouch = details.pointerCount > 1;
+        },
+        onScaleUpdate: (details) {
+          if (details.pointerCount == 2) {
+            if (!_isMultiTouch) {
+              setState(() {
+                _isMultiTouch = true;
+              });
+            }
+            final scale = details.scale;
+            final scaleFactor = scale / _baseScale;
+            _baseScale = scale;
+
+            if ((scaleFactor - 1.0).abs() > 0.001) {
+              final xRange =
+                  widget.controller.maxX.value - widget.controller.minX.value;
+              final yRange =
+                  widget.controller.maxY.value - widget.controller.minY.value;
+              final xCenter =
+                  (widget.controller.minX.value +
+                      widget.controller.maxX.value) /
+                  2;
+              final yCenter =
+                  (widget.controller.minY.value +
+                      widget.controller.maxY.value) /
+                  2;
+
+              final allX = widget.controller.historyPoints
+                  .map((e) => e.x)
+                  .toList();
+              final allY = widget.controller.historyPoints
+                  .map((e) => e.y)
+                  .toList();
+              final minPossibleX = allX.reduce((a, b) => a < b ? a : b);
+              final maxPossibleX = allX.reduce((a, b) => a > b ? a : b);
+              final minPossibleY = allY.reduce((a, b) => a < b ? a : b) * 0.9;
+              final maxPossibleY = allY.reduce((a, b) => a > b ? a : b) * 1.1;
+
+              // Zoom toward/away from center
+              final newXRange = xRange / scaleFactor;
+              final newYRange = yRange / scaleFactor;
+
+              widget.controller.minX.value = (xCenter - newXRange / 2).clamp(
+                minPossibleX,
+                maxPossibleX - newXRange,
+              );
+              widget.controller.maxX.value = (xCenter + newXRange / 2).clamp(
+                minPossibleX + newXRange,
+                maxPossibleX,
+              );
+              widget.controller.minY.value = (yCenter - newYRange / 2).clamp(
+                minPossibleY,
+                maxPossibleY - newYRange,
+              );
+              widget.controller.maxY.value = (yCenter + newYRange / 2).clamp(
+                minPossibleY + newYRange,
+                maxPossibleY,
+              );
+            }
+          } else if (details.pointerCount == 1 && !_isMultiTouch) {
+            // Single finger pan (both horizontal and vertical)
+            final dx = details.focalPointDelta.dx;
+            final dy = details.focalPointDelta.dy;
+
+            // Pan horizontally (X-axis - time)
+            if (dx.abs() > 0.5) {
+              final xRange =
+                  widget.controller.maxX.value - widget.controller.minX.value;
+              final sensitivity = xRange / 200;
+
+              final allX = widget.controller.historyPoints
+                  .map((e) => e.x)
+                  .toList();
+              final minPossibleX = allX.reduce((a, b) => a < b ? a : b);
+              final maxPossibleX = allX.reduce((a, b) => a > b ? a : b);
+
+              final deltaX =
+                  -dx * sensitivity; // Negative for natural scrolling
+              final newMinX = (widget.controller.minX.value + deltaX).clamp(
+                minPossibleX,
+                maxPossibleX - xRange,
+              );
+              final newMaxX = (widget.controller.maxX.value + deltaX).clamp(
+                minPossibleX + xRange,
+                maxPossibleX,
+              );
+
+              widget.controller.minX.value = newMinX;
+              widget.controller.maxX.value = newMaxX;
+            }
+
+            // Pan vertically (Y-axis - values)
+            if (dy.abs() > 0.5) {
+              final yRange =
+                  widget.controller.maxY.value - widget.controller.minY.value;
+              final sensitivity = yRange / 200;
+
+              final allY = widget.controller.historyPoints
+                  .map((e) => e.y)
+                  .toList();
+              final minPossibleY = allY.reduce((a, b) => a < b ? a : b) * 0.9;
+              final maxPossibleY = allY.reduce((a, b) => a > b ? a : b) * 1.1;
+
+              final deltaY = dy * sensitivity;
+              final newMinY = (widget.controller.minY.value + deltaY).clamp(
+                minPossibleY,
+                maxPossibleY - yRange,
+              );
+              final newMaxY = (widget.controller.maxY.value + deltaY).clamp(
+                minPossibleY + yRange,
+                maxPossibleY,
+              );
+
+              widget.controller.minY.value = newMinY;
+              widget.controller.maxY.value = newMaxY;
+            }
+          }
+        },
+        onScaleEnd: (details) {
+          // Reset multi-touch flag after a short delay
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) {
+              setState(() {
+                _isMultiTouch = false;
+              });
+            }
+          });
+        },
+        child: Padding(
+          padding: const EdgeInsets.only(right: 10, bottom: 10),
+          child: AbsorbPointer(
+            absorbing: _isMultiTouch,
+            child: LineChart(
+              LineChartData(
+                clipData: FlClipData.all(),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: null,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      strokeWidth: 1,
+                    );
+                  },
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index >= 0 &&
+                            index < widget.controller.historyDates.length) {
+                          // Show approx 7 labels across the view (shorter format now)
+                          final visibleRange =
+                              (widget.controller.maxX.value -
+                              widget.controller.minX.value);
+                          final step = (visibleRange / 7).floor();
+                          final interval = step > 0 ? step : 1;
+
+                          if (index % interval == 0 ||
+                              index == widget.controller.maxX.value.toInt()) {
+                            return SideTitleWidget(
+                              meta: meta,
+                              space: 12,
+                              child: Text(
+                                widget.controller.historyDates[index],
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 45,
+                      interval: null,
+                      getTitlesWidget: (val, _) => Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Text(
+                          val.toStringAsFixed(2),
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: Colors.white70,
                             fontSize: 10,
                           ),
                         ),
                       ),
                     ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border(
+                    left: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.2),
                     ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                    bottom: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.2),
                     ),
                   ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: [
-                        const FlSpot(0, 1),
-                        const FlSpot(1, 1.5),
-                        const FlSpot(2, 1.4),
-                        const FlSpot(3, 1.8),
-                        const FlSpot(4, 2),
-                        const FlSpot(5, 2.2),
-                        const FlSpot(6, 1.8),
-                      ],
-                      isCurved: true,
-                      color: AppColors.primaryOrange,
-                      barWidth: 3,
-                      dotData: const FlDotData(show: true),
-                    ),
-                  ],
                 ),
+                lineTouchData: LineTouchData(
+                  enabled:
+                      false, // Disable chart touch so drag works on plot area
+                  handleBuiltInTouches: false,
+                ),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: widget.controller.historyPoints,
+                    isCurved: true,
+                    color: AppColors.primaryOrange,
+                    barWidth: 3,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 4,
+                          color: AppColors.primaryOrange,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        );
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryOrange.withValues(alpha: 0.3),
+                          AppColors.primaryOrange.withValues(alpha: 0.05),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+                minX: widget.controller.minX.value,
+                maxX: widget.controller.maxX.value,
+                minY: widget.controller.minY.value,
+                maxY: widget.controller.maxY.value,
               ),
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.linear,
             ),
-          ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

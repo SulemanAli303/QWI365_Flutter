@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:water365/models/site.dart';
@@ -75,6 +76,7 @@ class SitesController extends GetxController {
       if (responseBody != null) {
         final result = apiService.parseSoapResponse(responseBody, "Sites");
         if (result != "[]") {
+         debugPrint("RAW DATA for Sites List -> $result");
           final List<dynamic> jsonList = json.decode(result);
           sites.value = jsonList.map((j) => Site.fromJson(j)).toList();
 
@@ -95,7 +97,7 @@ class SitesController extends GetxController {
         }
       }
     } catch (e) {
-      print("Error fetching sites in SitesController: $e");
+     debugPrint("Error fetching sites in SitesController: $e");
     } finally {
       isLoading.value = false;
     }
@@ -129,27 +131,20 @@ class SitesController extends GetxController {
           body:
               '<Metals xmlns="http://tempuri.org/"><UserName>$username</UserName><SiteName>${site.siteName}</SiteName></Metals>',
         ),
-        apiService.soapRequest(
-          operation: "IonicFeatures",
-          body:
-              '<IonicFeatures xmlns="http://tempuri.org/"><UserName>$username</UserName><SiteName>${site.siteName}</SiteName></IonicFeatures>',
-        ),
       ];
 
       final results = await Future.wait(futures);
       Map<String, Map<String, dynamic>> rawDataMap = {};
       Map<String, double> numericData = {};
 
-      final ops = [
-        "physicalChemical",
-        "HealthAesthetic",
-        "Metals",
-        "IonicFeatures",
-      ];
+      final ops = ["physicalChemical", "HealthAesthetic", "Metals"];
       for (int i = 0; i < results.length; i++) {
         final res = results[i];
         if (res != null) {
           final jsonStr = apiService.parseSoapResponse(res, ops[i]);
+         debugPrint(
+            "RAW DATA for Site: ${site.siteName}, Operation: ${ops[i]} -> $jsonStr",
+          );
           if (jsonStr != "[]") {
             final List<dynamic> dataList = json.decode(jsonStr);
             if (dataList.isNotEmpty) {
@@ -203,7 +198,7 @@ class SitesController extends GetxController {
         numericData,
       );
     } catch (e) {
-      print("Error fetching all data for site ${site.siteName}: $e");
+     debugPrint("Error fetching all data for site ${site.siteName}: $e");
     } finally {
       isDataLoading.value = false;
     }

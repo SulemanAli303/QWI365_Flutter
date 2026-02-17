@@ -69,7 +69,7 @@ class HomeController extends GetxController {
         }
       }
     } catch (e) {
-      print("Error fetching sites: $e");
+     debugPrint("Error fetching sites: $e");
     } finally {
       isLoading.value = false;
     }
@@ -149,7 +149,7 @@ class HomeController extends GetxController {
       Dialog(
         backgroundColor: AppColors.logoutBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        child: Container(
+        child: SizedBox(
           width: 300,
           child: Column(
             mainAxisSize: MainAxisSize.min,
