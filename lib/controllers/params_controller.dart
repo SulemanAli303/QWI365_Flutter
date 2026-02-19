@@ -49,14 +49,29 @@ class ParamsController extends GetxController {
     if (Get.arguments != null) {
       site = Get.arguments['site'];
       paramName = Get.arguments['paramName'];
-
+      print(
+        "Initializing ParamsController [${site.siteName} - $paramName] Tag: ${site.siteName}_$paramName",
+      );
       // Load initial data
       loadParameters();
 
       // Listen for data updates from SitesController (in case they arrive late)
       final sitesController = Get.find<SitesController>();
-      ever(sitesController.siteRawData, (_) => loadParameters());
+      _worker = ever(sitesController.siteRawData, (_) {
+        print("siteRawData updated, reloading for ${site.siteName}");
+        loadParameters();
+      });
     }
+  }
+
+  late Worker _worker;
+
+  @override
+  void onClose() {
+    if (Get.arguments != null) {
+      _worker.dispose();
+    }
+    super.onClose();
   }
 
   void loadParameters() {
@@ -72,36 +87,78 @@ class ParamsController extends GetxController {
       }
 
       final category = paramName.toUpperCase();
-      String op = "";
-      if (category == "PHYSICAL & CHEMICAL") {
-        op = "physicalChemical";
-      } else if (category == "HEALTH & AESTHETIC") {
-        op = "HealthAesthetic";
-      } else if (category == "METALS") {
-        op = "Metals";
-      } else if (category == "IONIC FEATURES") {
-        op = "IonicFeatures";
+      Map<String, dynamic> displayData = {};
+
+      print("loadParameters for site: ${site.siteName}, category: $category");
+
+      if (category == "HEALTH & AESTHETIC") {
+        // MERGE LOGIC matching iOS Params.swift
+        final healthRaw = rawData["HealthAestheticNew"] ?? {};
+        final physicalRaw = rawData["physicalChemicalNew"] ?? {};
+        final metalsRaw = rawData["Metals"] ?? {};
+
+        print(
+          "Health/Aesthetic Merge - Health keys: ${healthRaw.keys.length}, Phys keys: ${physicalRaw.keys.length}, Metals keys: ${metalsRaw.keys.length}",
+        );
+
+        displayData = {
+          // From Physical/Chemical API
+          'pH': physicalRaw['pH'],
+          'EC': physicalRaw['EC'],
+          'TDS': physicalRaw['TDS'],
+          'TSS': physicalRaw['TSS'],
+          'Total_Alkalinity': physicalRaw['Total_Alkalinity'],
+          'Turbidity': physicalRaw['Turbidity'],
+          'Temperature': physicalRaw['Temperature'],
+          'Total_Hardness': physicalRaw['Total_Hardness'],
+          'ORPe': physicalRaw['ORPe'],
+          'DO': physicalRaw['DO'],
+
+          // From Health Aesthetic API
+          'Flouride': healthRaw['Flouride'],
+          'Residual_Chlorine': healthRaw['Residual_Chlorine'],
+          'combinedChlorine':
+              healthRaw['Free_Chlorine'], // Mapping from iOS code
+          'E_Coli': healthRaw['E_Coli'],
+          'Total_Coliforms': healthRaw['Total_Coliforms'],
+          'Fecal_Coliforms': healthRaw['Fecal_Coliforms'],
+
+          // From Metals API
+          'Iron': metalsRaw['Iron'],
+          'Lead': metalsRaw['Lead'],
+          'Arsenic': metalsRaw['Arsenic'],
+        };
+      } else {
+        String op = "";
+        if (category == "PHYSICAL & CHEMICAL") {
+          op = "physicalChemicalNew";
+        } else if (category == "METALS") {
+          op = "Metals";
+        } else if (category == "IONIC FEATURES") {
+          op = "IonicFeatures";
+        }
+        print(
+          "Processing parameters for category: $category using operation: $op, rawData[op] keys: ${rawData[op]?.keys.length ?? 0}",
+        );
+        displayData = Map<String, dynamic>.from(rawData[op] ?? {});
       }
 
-      Map<String, dynamic> displayData = Map<String, dynamic>.from(
-        rawData[op] ?? {},
-      );
-
-      // Apply unit conversions consistently for all categories (from µg/L to mg/L for specific metals)
-      const metalsToConvert = [
+      // Apply unit conversions consistently for all categories (from µg/L to mg/L or similar)
+      const paramsToConvert = [
         'Iron',
         'Lead',
         'Flouride',
         'Fluoride',
         'Arsenic',
         'Manganese',
+        'TDS', // Convert TDS from mg/L to g/L parity
       ];
 
-      for (var metal in metalsToConvert) {
-        if (displayData.containsKey(metal)) {
-          final val = double.tryParse(displayData[metal]?.toString() ?? "");
+      for (var param in paramsToConvert) {
+        if (displayData.containsKey(param)) {
+          final val = double.tryParse(displayData[param]?.toString() ?? "");
           if (val != null) {
-            displayData[metal] = val / 1000.0;
+            displayData[param] = val / 1000.0;
           }
         }
       }
@@ -120,6 +177,7 @@ class ParamsController extends GetxController {
       }
 
       _processData(displayData);
+      print("Parameters loaded: ${parameters.length} items");
     } catch (e) {
       debugPrint("Error loading parameters: $e");
     }
@@ -138,21 +196,24 @@ class ParamsController extends GetxController {
         return;
       }
 
-      if ([
-        "chlorophyll",
-        "CO2",
-        "H2S",
-        "HCO3",
-        "Mg",
-        "Strontium",
-        "Vanadium",
-        "Cadmium",
-        "Cobalt",
-        "Nickel",
-        "Silica",
-        "Zinc",
-      ].contains(key)) {
-        return;
+      if (paramName == "Ionic Features" || paramName == "METALS") {
+        if ([
+          "HCO3",
+          "Mg",
+          "Strontium",
+          "Vanadium",
+          "Cadmium",
+          "Cobalt",
+          "Nickel",
+          "Silica",
+          "Zinc",
+        ].contains(key)) {
+          return;
+        }
+      } else {
+        if (["chlorophyll", "CO2", "H2S"].contains(key)) {
+          return;
+        }
       }
 
       final double? val = double.tryParse(value?.toString() ?? "");
@@ -165,7 +226,7 @@ class ParamsController extends GetxController {
           ParameterData(
             name: _formatDisplayName(key),
             key: key,
-            value: "${val.toStringAsFixed(2)} ${_getUnit(key)}",
+            value: "${_formatValue(val, key)} ${_getUnit(key)}",
             numericValue: val,
             status: status,
           ),
@@ -378,11 +439,22 @@ class ParamsController extends GetxController {
       case "Flouride":
         return "Fluoride";
       case "No3":
-        return "Nitrate";
+        return "NO\u{2083}";
       case "Manganese":
         return "Manganese";
       case "Arsenic":
         return "Arsenic";
+      case "CO2":
+        return "CO\u{2082}";
+      case "H2S":
+        return "H\u{2082}S";
+      case "NH4":
+        return "NH\u{2084}";
+      case "HCO3":
+        return "HCO\u{2083}";
+      case "ORPe":
+      case "ORP":
+        return "ORP";
       default:
         return key.replaceAll("_", " ");
     }
@@ -432,5 +504,11 @@ class ParamsController extends GetxController {
     if (key == "chlorophyll") return "µg/L";
     if (key == "Fecal_Coliforms") return "CFU/100ml";
     return "";
+  }
+
+  String _formatValue(double val, String key) {
+    // The user wants exactly 2 decimal places for all values now.
+    // Standard rounding is used (e.g., 1.107 -> 1.11).
+    return val.toStringAsFixed(2);
   }
 }

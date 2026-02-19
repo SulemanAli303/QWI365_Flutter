@@ -28,10 +28,18 @@ class ParameterStatus {
   });
 
   WaterQualityStatus getStatus(double value) {
-    if (goodMin != null && value < goodMin!) return WaterQualityStatus.danger;
-    if (goodMax != null && value <= goodMax!) return WaterQualityStatus.good;
-    if (warningMax != null && value <= warningMax!)
-      return WaterQualityStatus.warning;
+    // 1. Check if it's within "good" range
+    bool isGood = true;
+    if (goodMin != null && value < goodMin!) isGood = false;
+    if (goodMax != null && value > goodMax!) isGood = false;
+    if (isGood) return WaterQualityStatus.good;
+
+    // 2. Check if it's within "warning" range
+    bool isWarning = true;
+    if (warningMin != null && value < warningMin!) isWarning = false;
+    if (warningMax != null && value > warningMax!) isWarning = false;
+    if (isWarning) return WaterQualityStatus.warning;
+
     return WaterQualityStatus.danger;
   }
 }
@@ -75,11 +83,12 @@ class WaterQualityCalculator {
   }
 
   static const Map<String, ParameterStatus> bisStandards = {
-    // Physical & Chemical
+    // Physical & Chemical (Thresholds adjusted for iOS parity)
     "pH": ParameterStatus(
-      goodMin: 6.5,
+      goodMin: 5.0,
       goodMax: 8.5,
-      warningMax: 9.2,
+      warningMin: 0.0,
+      warningMax: 9.5,
       group: ParameterGroup.chemistry,
     ),
     "EC": ParameterStatus(
@@ -93,90 +102,92 @@ class WaterQualityCalculator {
       group: ParameterGroup.chemistry,
     ),
     "Hardness": ParameterStatus(
-      goodMax: 200.0,
-      warningMax: 600.0,
+      goodMax: 600.0,
+      warningMax: 800.0,
       group: ParameterGroup.chemistry,
     ),
     "Alkalinity": ParameterStatus(
-      goodMax: 200.0,
-      warningMax: 600.0,
+      goodMax: 600.0,
+      warningMax: 800.0,
       group: ParameterGroup.chemistry,
     ),
     "TDS": ParameterStatus(
-      goodMax: 500.0,
-      warningMax: 2000.0,
+      goodMax: 1500.0, // iOS use 1.5 g/L
+      warningMax: 2000.0, // iOS use 2.0 g/L
       group: ParameterGroup.aesthetic,
     ),
 
-    // Health & Aesthetic
+    // Health & Aesthetic (Thresholds adjusted for iOS parity)
     "TSS": ParameterStatus(
       goodMax: 2.0,
       warningMax: 5.0,
       group: ParameterGroup.aesthetic,
     ),
     "Turbidity": ParameterStatus(
-      goodMax: 1.0,
-      warningMax: 5.0,
+      goodMax: 15.0,
+      warningMax: 200.0,
       group: ParameterGroup.aesthetic,
     ),
     "DO": ParameterStatus(
-      goodMin: 4.0,
-      goodMax: 10.0,
+      goodMax: 20.0,
+      warningMax: 40.0,
       group: ParameterGroup.aesthetic,
     ),
     "E_Coli": ParameterStatus(
-      goodMax: 0.0,
-      warningMax: 0.0,
+      goodMax: 100.0,
+      warningMax: 500.0,
       group: ParameterGroup.microbio,
     ),
     "Total_Coliforms": ParameterStatus(
-      goodMax: 0.0,
-      warningMax: 0.0,
+      goodMax: 5000.0,
+      warningMax: 7000.0,
       group: ParameterGroup.microbio,
     ),
     "Fecal_Coliforms": ParameterStatus(
-      goodMax: 0.0,
-      warningMax: 0.0,
+      goodMax: 50.0,
+      warningMax: 300.0,
       group: ParameterGroup.microbio,
     ),
     "Color": ParameterStatus(
-      goodMax: 5.0,
-      warningMax: 15.0,
+      goodMax: 10.0,
+      warningMax: 25.0,
       group: ParameterGroup.aesthetic,
     ),
     "Fluoride": ParameterStatus(
-      goodMax: 1.0,
-      warningMax: 1.5,
+      goodMax: 1.5,
+      warningMax: 2.0,
       group: ParameterGroup.toxicMetals,
     ),
     "Flouride": ParameterStatus(
-      goodMax: 1.0,
-      warningMax: 1.5,
+      goodMax: 1.5,
+      warningMax: 2.0,
       group: ParameterGroup.toxicMetals,
     ),
     "Arsenic": ParameterStatus(
-      goodMax: 0.01,
-      warningMax: 0.05,
+      goodMax: 0.05,
+      warningMax: 0.1,
       group: ParameterGroup.toxicMetals,
     ),
     "Iron": ParameterStatus(
-      goodMax: 0.3,
+      goodMax: 0.8,
       warningMax: 1.0,
       group: ParameterGroup.toxicMetals,
     ),
     "Lead": ParameterStatus(
-      goodMax: 0.01,
-      warningMax: 0.01,
+      goodMax: 0.02,
+      warningMax: 0.05,
       group: ParameterGroup.toxicMetals,
     ),
     "Manganese": ParameterStatus(
       goodMax: 0.1,
-      warningMax: 0.3,
+      warningMax: 1.0,
       group: ParameterGroup.toxicMetals,
     ),
     "Residual_Chlorine": ParameterStatus(
-      goodMin: 0.2,
-      goodMax: 1.0,
+      goodMin: 0.4,
+      goodMax: 4.0,
+      warningMin: 0.0,
+      warningMax: 0.4,
       group: ParameterGroup.disinfection,
     ),
     "combinedChlorine": ParameterStatus(
@@ -184,31 +195,51 @@ class WaterQualityCalculator {
       goodMax: 1.0,
       group: ParameterGroup.disinfection,
     ),
+    "chlorophyll": ParameterStatus(
+      goodMax: 30.0,
+      warningMax: 50.0,
+      group: ParameterGroup.aesthetic,
+    ),
+    "CO2": ParameterStatus(
+      goodMax: 10.0,
+      warningMax: 15.0,
+      group: ParameterGroup.aesthetic,
+    ),
+    "COD": ParameterStatus(
+      goodMax: 50.0,
+      warningMax: 80.0,
+      group: ParameterGroup.chemistry,
+    ),
+    "BOD5": ParameterStatus(
+      goodMax: 5.0,
+      warningMax: 10.0,
+      group: ParameterGroup.chemistry,
+    ),
 
     // Ionic
     "No3": ParameterStatus(
       goodMax: 45.0,
-      warningMax: 45.0,
+      warningMax: 60.0,
       group: ParameterGroup.chemistry,
     ),
     "Ca": ParameterStatus(
-      goodMax: 75.0,
-      warningMax: 200.0,
+      goodMax: 200.0,
+      warningMax: 250.0,
       group: ParameterGroup.chemistry,
     ),
     "Mg": ParameterStatus(
-      goodMax: 30.0,
-      warningMax: 100.0,
+      goodMax: 25.0,
+      warningMax: 50.0,
       group: ParameterGroup.chemistry,
     ),
     "Cl": ParameterStatus(
-      goodMax: 250.0,
-      warningMax: 1000.0,
+      goodMax: 1000.0,
+      warningMax: 1500.0,
       group: ParameterGroup.chemistry,
     ),
     "Na": ParameterStatus(
-      goodMax: 200.0,
-      warningMax: 200.0,
+      goodMax: 50.0,
+      warningMax: 500.0,
       group: ParameterGroup.chemistry,
     ),
   };

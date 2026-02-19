@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,7 +24,7 @@ class ApiService {
   </soap:Body>
 </soap:Envelope>
 """;
-
+log(  "Constructed SOAP message for operation: $operation with body: $body");
     try {
       final response = await http.post(
         Uri.parse("$baseUrl?op=$operation"),
@@ -32,7 +34,7 @@ class ApiService {
           "Host": "carbon.expert365.com.au",
         },
         body: soapMessage,
-      );
+      );log(  "SOAP request sent for operation: $operation with body: $body");
 
       if (response.statusCode == 200) {
         return response.body;

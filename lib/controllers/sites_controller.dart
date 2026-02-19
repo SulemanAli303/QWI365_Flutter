@@ -76,7 +76,7 @@ class SitesController extends GetxController {
       if (responseBody != null) {
         final result = apiService.parseSoapResponse(responseBody, "Sites");
         if (result != "[]") {
-         debugPrint("RAW DATA for Sites List -> $result");
+          debugPrint("RAW DATA for Sites List -> $result");
           final List<dynamic> jsonList = json.decode(result);
           sites.value = jsonList.map((j) => Site.fromJson(j)).toList();
 
@@ -97,7 +97,7 @@ class SitesController extends GetxController {
         }
       }
     } catch (e) {
-     debugPrint("Error fetching sites in SitesController: $e");
+      debugPrint("Error fetching sites in SitesController: $e");
     } finally {
       isLoading.value = false;
     }
@@ -117,32 +117,46 @@ class SitesController extends GetxController {
 
       final List<Future<String?>> futures = [
         apiService.soapRequest(
-          operation: "physicalChemical",
+          operation: "physicalChemicalNew",
           body:
-              '<physicalChemical xmlns="http://tempuri.org/"><UserName>$username</UserName><SiteName>${site.siteName}</SiteName></physicalChemical>',
+              '<physicalChemicalNew xmlns="http://tempuri.org/"><UserName>$username</UserName><SiteName>${site.siteName}</SiteName></physicalChemicalNew>',
         ),
         apiService.soapRequest(
-          operation: "HealthAesthetic",
+          operation: "HealthAestheticNew",
           body:
-              '<HealthAesthetic xmlns="http://tempuri.org/"><UserName>$username</UserName><SiteName>${site.siteName}</SiteName></HealthAesthetic>',
+              '<HealthAestheticNew xmlns="http://tempuri.org/"><UserName>$username</UserName><SiteName>${site.siteName}</SiteName></HealthAestheticNew>',
         ),
         apiService.soapRequest(
           operation: "Metals",
           body:
               '<Metals xmlns="http://tempuri.org/"><UserName>$username</UserName><SiteName>${site.siteName}</SiteName></Metals>',
         ),
+        apiService.soapRequest(
+          operation: "IonicFeatures",
+          body:
+              '<IonicFeatures xmlns="http://tempuri.org/"><UserName>$username</UserName><SiteName>${site.siteName}</SiteName></IonicFeatures>',
+        ),
       ];
-
+      print('futures length: ${futures.length}');
+      print(
+        "Fetching data for site: ${site.siteName} with operations: physicalChemicalNew, HealthAestheticNew, Metals, IonicFeatures",
+      );
       final results = await Future.wait(futures);
+      print("Results: ${results.length}");
       Map<String, Map<String, dynamic>> rawDataMap = {};
       Map<String, double> numericData = {};
 
-      final ops = ["physicalChemical", "HealthAesthetic", "Metals"];
+      final ops = [
+        "physicalChemicalNew",
+        "HealthAestheticNew",
+        "Metals",
+        "IonicFeatures",
+      ];
       for (int i = 0; i < results.length; i++) {
         final res = results[i];
         if (res != null) {
           final jsonStr = apiService.parseSoapResponse(res, ops[i]);
-         debugPrint(
+          debugPrint(
             "RAW DATA for Site: ${site.siteName}, Operation: ${ops[i]} -> $jsonStr",
           );
           if (jsonStr != "[]") {
@@ -198,7 +212,7 @@ class SitesController extends GetxController {
         numericData,
       );
     } catch (e) {
-     debugPrint("Error fetching all data for site ${site.siteName}: $e");
+      debugPrint("Error fetching all data for site ${site.siteName}: $e");
     } finally {
       isDataLoading.value = false;
     }

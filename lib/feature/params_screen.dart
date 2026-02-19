@@ -12,7 +12,12 @@ class ParamsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ParamsController());
+    final Map<String, dynamic> args = Get.arguments ?? {};
+    final String siteName = args['site']?.siteName ?? "unknown";
+    final String category = args['paramName'] ?? "unknown";
+    final String controllerTag = "${siteName}_$category";
+
+    final controller = Get.put(ParamsController(), tag: controllerTag);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
@@ -30,7 +35,10 @@ class ParamsScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
+          onPressed: () {
+            Get.delete<ParamsController>(tag: controllerTag);
+            Get.back();
+          },
         ),
       ),
       body: Obx(() {
@@ -167,7 +175,10 @@ class ParamsScreen extends StatelessWidget {
   }
 
   Widget _buildParameterRow(ParameterData data) {
-    final controller = Get.find<ParamsController>();
+    final Map<String, dynamic> args = Get.arguments ?? {};
+    final String siteName = args['site']?.siteName ?? "unknown";
+    final String category = args['paramName'] ?? "unknown";
+    final controller = Get.find<ParamsController>(tag: "${siteName}_$category");
     Color dotColor;
     if (data.status == WaterQualityStatus.good)
       dotColor = AppColors.dotGreen;
@@ -230,7 +241,10 @@ class ParamsScreen extends StatelessWidget {
   }
 
   void _showHistoryChart(ParameterData data) {
-    final controller = Get.find<ParamsController>();
+    final Map<String, dynamic> args = Get.arguments ?? {};
+    final String siteName = args['site']?.siteName ?? "unknown";
+    final String category = args['paramName'] ?? "unknown";
+    final controller = Get.find<ParamsController>(tag: "${siteName}_$category");
     Get.bottomSheet(
       PopScope(
         canPop: false, // Prevent back button dismissal
