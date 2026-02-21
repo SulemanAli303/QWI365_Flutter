@@ -148,6 +148,7 @@ class _RecipesScreenState extends State<RecipesScreen>
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.whiteColor,
+          dividerColor: AppColors.bgColor,
           unselectedLabelColor: AppColors.whiteColor,
           indicatorColor: AppColors.orangeColor,
           indicatorWeight: 4,
@@ -319,27 +320,48 @@ class _RecipesScreenState extends State<RecipesScreen>
             Row(
               children: [
                 Expanded(
-                  child: Row(
-                    children: [
-                      Image.asset('assets/to_site.png', width: 28, height: 28),
-                      const SizedBox(width: 6),
-                      const Text(
-                        'View Site',
-                        style: TextStyle(fontSize: 14, color: Colors.black),
-                      ),
-                    ],
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/sites',
+                        arguments: recipeModel.siteName,
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        Image.asset('assets/to_site.png', width: 28, height: 28),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'View Site',
+                          style: TextStyle(fontSize: 14, color: Colors.black),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 Expanded(
-                  child: Row(
-                    children: [
-                      Image.asset('assets/valvei.png', width: 28, height: 28),
-                      const SizedBox(width: 6),
-                      const Text(
-                        'Update Schedule',
-                        style: TextStyle(fontSize: 14, color: Colors.black),
-                      ),
-                    ],
+                  child: GestureDetector(
+                    onTap: () {
+                      // Handle Update Schedule action
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Update Schedule for ${recipeModel.siteName}',
+                          ),
+                        ),
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        Image.asset('assets/valvei.png', width: 28, height: 28),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Update Schedule',
+                          style: TextStyle(fontSize: 14, color: Colors.black),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -433,7 +455,6 @@ class _RecipesScreenState extends State<RecipesScreen>
           children: [
             // Site selector row (mirrors Android Spinner + ◀ ▶ buttons)
             _buildSiteSelector(siteNames),
-            const Divider(height: 1),
             Expanded(
               child: recipeProvider.loadingHistory
                   ? const Center(child: CircularProgressIndicator())
@@ -488,58 +509,61 @@ class _RecipesScreenState extends State<RecipesScreen>
   }
 
   Widget _buildSiteSelector(List<String> siteNames) {
+    final currentIndex = _selectedHistorySite != null
+        ? siteNames.indexOf(_selectedHistorySite!)
+        : 0;
+    final isLeftEnabled = currentIndex > 0;
+    final isRightEnabled = currentIndex < siteNames.length - 1;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      color: Colors.grey.shade100,
+      padding: const EdgeInsets.all(10),
+      color: Colors.black,
       child: Row(
         children: [
-          // Left arrow button
-          _arrowButton(
+          _buildRoundButton(
             icon: Icons.chevron_left,
-            enabled:
-                siteNames.isNotEmpty &&
-                _selectedHistorySite != null &&
-                siteNames.indexOf(_selectedHistorySite!) > 0,
-            onTap: () {
-              if (_selectedHistorySite == null) return;
-              final idx = siteNames.indexOf(_selectedHistorySite!);
-              if (idx > 0) {
-                setState(() => _selectedHistorySite = siteNames[idx - 1]);
-                _fetchHistoryForSelectedSite();
-              }
-            },
+            onTap: isLeftEnabled
+                ? () {
+                    setState(
+                      () => _selectedHistorySite = siteNames[currentIndex - 1],
+                    );
+                    _fetchHistoryForSelectedSite();
+                  }
+                : null,
+            enabled: isLeftEnabled,
           ),
-          const SizedBox(width: 6),
-          // Dropdown
+          const SizedBox(width: 10),
           Expanded(
-            child: siteNames.isEmpty
-                ? const Text(
-                    'No sites available',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
-                  )
-                : DropdownButtonHideUnderline(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.shade300),
+            child: Container(
+              height: 35,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: siteNames.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No sites available',
+                        style: TextStyle(color: Colors.grey),
                       ),
+                    )
+                  : DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
-                        value:
-                            _selectedHistorySite != null &&
+                        value: _selectedHistorySite != null &&
                                 siteNames.contains(_selectedHistorySite)
                             ? _selectedHistorySite
                             : null,
                         isExpanded: true,
-                        hint: const Text('Select site'),
+                        icon:
+                            const Icon(Icons.arrow_drop_down, color: Colors.black),
                         items: siteNames
                             .map(
                               (name) => DropdownMenuItem(
                                 value: name,
                                 child: Text(
                                   name,
+                                  style: const TextStyle(color: Colors.black),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -551,45 +575,41 @@ class _RecipesScreenState extends State<RecipesScreen>
                         },
                       ),
                     ),
-                  ),
+            ),
           ),
-          const SizedBox(width: 6),
-          // Right arrow button
-          _arrowButton(
+          const SizedBox(width: 10),
+          _buildRoundButton(
             icon: Icons.chevron_right,
-            enabled:
-                siteNames.isNotEmpty &&
-                _selectedHistorySite != null &&
-                siteNames.indexOf(_selectedHistorySite!) < siteNames.length - 1,
-            onTap: () {
-              if (_selectedHistorySite == null) return;
-              final idx = siteNames.indexOf(_selectedHistorySite!);
-              if (idx < siteNames.length - 1) {
-                setState(() => _selectedHistorySite = siteNames[idx + 1]);
-                _fetchHistoryForSelectedSite();
-              }
-            },
+            onTap: isRightEnabled
+                ? () {
+                    setState(
+                      () => _selectedHistorySite = siteNames[currentIndex + 1],
+                    );
+                    _fetchHistoryForSelectedSite();
+                  }
+                : null,
+            enabled: isRightEnabled,
           ),
         ],
       ),
     );
   }
 
-  Widget _arrowButton({
+  Widget _buildRoundButton({
     required IconData icon,
+    required VoidCallback? onTap,
     required bool enabled,
-    required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
+    return InkWell(
+      onTap: onTap,
       child: Container(
-        width: 35,
+        width: 40,
         height: 35,
         decoration: BoxDecoration(
-          color: enabled ? Colors.blueGrey : Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(20),
+          color: enabled ? Colors.white : Colors.grey[700],
+          borderRadius: BorderRadius.circular(5),
         ),
-        child: Icon(icon, color: Colors.white, size: 22),
+        child: Icon(icon, color: enabled ? Colors.black : Colors.grey[400]),
       ),
     );
   }

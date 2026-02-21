@@ -46,7 +46,19 @@ class SiteProvider with ChangeNotifier {
         response,
         'SiteScreenResult',
       );
-      _sites = result.map((e) => SiteModel.fromJson(e)).toList();
+
+      // Deduplicate sites - keep only first occurrence of each site name
+      // This handles multiple devices at the same site
+      final Map<String, SiteModel> uniqueSitesMap = {};
+      for (var item in result) {
+        final site = SiteModel.fromJson(item);
+        if (!uniqueSitesMap.containsKey(site.siteName)) {
+          uniqueSitesMap[site.siteName] = site;
+        }
+      }
+
+      _sites = uniqueSitesMap.values.toList();
+      _selectedSiteName = _sites.first?.siteName ?? "";
       notifyListeners();
     } catch (e) {
       rethrow;

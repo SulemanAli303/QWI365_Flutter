@@ -54,52 +54,148 @@ class GraphProvider with ChangeNotifier {
         'Rainfall': [],
       };
 
-      for (var e in result) {
-        final data = HistoricalDataModel.fromMap(e.toString());
-        final dType = deviceTypeMap[data.deviceName];
-        if (dType == null) continue;
+      // Parse graph data similar to Java version parseGraphData
+      for (String key in deviceTypeMap.keys) {
+        for (var e in result) {
+          final data = HistoricalDataModel.fromMap(e);
+          final dType = deviceTypeMap[data.deviceName];
 
-        switch (dType) {
-          case "10HS":
-          case "GS1":
-            _graphData['Moisture']!.add(data);
-            break;
-          case "5TM":
-            // In Android, 5TM adds value to mcArr (bus1) and tempArr (bus2)
-            // But the string format seems to suggest only one value per string.
-            // Let's check Android Graphs.java line 690-734 again.
-            _graphData['Moisture']!.add(data);
-            // In Android: tempArr.add(bus2 + "|" + time + "|" + dName);
-            // This implies the SAME result row might be processed multiple times?
-            // No, looking at Graphs.java, bus1, bus2, bus3 are parsed from ONE JSONObject.
-            // But the result from server is "result.toString()" which is a JSONArray.
-            // Each entry in JSONArray is parsed.
-            // Wait, if the entry is "value|time|deviceName", where are bus2, bus3?
-            // Let's re-read Graphs.java parseGraphData:
-            // "String bus1 = jObject.getString("bus_1_Reading");"
-            // Ah, it's a JSON string!
-            break;
-          case "GS3":
-          case "5TE":
-          case "EnviroScan":
-            _graphData['Moisture']!.add(data);
-            break;
-          case "PYR":
-            _graphData['Solar']!.add(data);
-            break;
-          case "VP4":
-            _graphData['Temperature']!.add(data);
-            break;
-          case "ECRN50":
-          case "ECRN100":
-            _graphData['Rainfall']!.add(data);
-            break;
-          case "PH":
-            _graphData['PH']!.add(data);
-            break;
-          case "EC":
-            _graphData['EC']!.add(data);
-            break;
+          if (key == data.deviceName && dType != null) {
+            switch (dType) {
+              case "10HS":
+              case "GS1":
+                _graphData['Moisture']!.add(
+                  HistoricalDataModel(
+                    bus1Reading: data.bus1Reading,
+                    dateTime: data.dateTime,
+                    deviceName: data.deviceName,
+                    refillPoint: data.refillPoint,
+                  ),
+                );
+                break;
+              case "5TM":
+                // Add moisture (bus1)
+                _graphData['Moisture']!.add(
+                  HistoricalDataModel(
+                    bus1Reading: data.bus1Reading,
+                    dateTime: data.dateTime,
+                    deviceName: data.deviceName,
+                    refillPoint: data.refillPoint,
+                  ),
+                );
+                // Add temperature (bus2)
+                if (data.bus2Reading != null) {
+                  _graphData['Temperature']!.add(
+                    HistoricalDataModel(
+                      bus1Reading: data.bus2Reading!,
+                      dateTime: data.dateTime,
+                      deviceName: data.deviceName,
+                    ),
+                  );
+                }
+                break;
+              case "GS3":
+              case "5TE":
+              case "EnviroScan":
+                // Add moisture (bus1)
+                _graphData['Moisture']!.add(
+                  HistoricalDataModel(
+                    bus1Reading: data.bus1Reading,
+                    dateTime: data.dateTime,
+                    deviceName: data.deviceName,
+                    refillPoint: data.refillPoint,
+                  ),
+                );
+                // Add temperature (bus2)
+                if (data.bus2Reading != null) {
+                  _graphData['Temperature']!.add(
+                    HistoricalDataModel(
+                      bus1Reading: data.bus2Reading!,
+                      dateTime: data.dateTime,
+                      deviceName: data.deviceName,
+                    ),
+                  );
+                }
+                // Add EC (bus3)
+                if (data.bus3Reading != null) {
+                  _graphData['EC']!.add(
+                    HistoricalDataModel(
+                      bus1Reading: data.bus3Reading!,
+                      dateTime: data.dateTime,
+                      deviceName: data.deviceName,
+                    ),
+                  );
+                }
+                break;
+              case "PYR":
+                _graphData['Solar']!.add(
+                  HistoricalDataModel(
+                    bus1Reading: data.bus1Reading,
+                    dateTime: data.dateTime,
+                    deviceName: data.deviceName,
+                  ),
+                );
+                break;
+              case "VP4":
+                // Add temperature (bus1)
+                _graphData['Temperature']!.add(
+                  HistoricalDataModel(
+                    bus1Reading: data.bus1Reading,
+                    dateTime: data.dateTime,
+                    deviceName: data.deviceName,
+                  ),
+                );
+                // Add humidity (bus2)
+                if (data.bus2Reading != null) {
+                  _graphData['Humidity']!.add(
+                    HistoricalDataModel(
+                      bus1Reading: data.bus2Reading!,
+                      dateTime: data.dateTime,
+                      deviceName: data.deviceName,
+                    ),
+                  );
+                }
+                // Add pressure (bus3)
+                if (data.bus3Reading != null) {
+                  _graphData['Pressure']!.add(
+                    HistoricalDataModel(
+                      bus1Reading: data.bus3Reading!,
+                      dateTime: data.dateTime,
+                      deviceName: data.deviceName,
+                    ),
+                  );
+                }
+                break;
+              case "ECRN50":
+              case "ECRN100":
+                _graphData['Rainfall']!.add(
+                  HistoricalDataModel(
+                    bus1Reading: data.bus1Reading,
+                    dateTime: data.dateTime,
+                    deviceName: data.deviceName,
+                  ),
+                );
+                break;
+              case "PH":
+                _graphData['PH']!.add(
+                  HistoricalDataModel(
+                    bus1Reading: data.bus1Reading,
+                    dateTime: data.dateTime,
+                    deviceName: data.deviceName,
+                  ),
+                );
+                break;
+              case "EC":
+                _graphData['EC']!.add(
+                  HistoricalDataModel(
+                    bus1Reading: data.bus1Reading,
+                    dateTime: data.dateTime,
+                    deviceName: data.deviceName,
+                  ),
+                );
+                break;
+            }
+          }
         }
       }
 

@@ -54,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      backgroundColor: AppColors.whiteColor, // Match light background in image
+      backgroundColor: AppColors.bgColor, // Match light background in image
       appBar: AppBar(
         title: const Text('Settings'),
         backgroundColor: AppColors.bgColor,
@@ -65,7 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             height: 70,
             decoration: BoxDecoration(
-              color: AppColors.greyColor,
+              color: AppColors.bgColor,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Padding(
@@ -138,7 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Text(
           label,
           style: const TextStyle(
-            color: Colors.black87,
+            color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w400,
           ),

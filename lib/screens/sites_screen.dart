@@ -107,6 +107,8 @@ class _SitesScreenState extends State<SitesScreen> {
   Widget build(BuildContext context) {
     final siteProvider = Provider.of<SiteProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
+
+    // Get the first site with matching name (to use for map and data)
     final selectedSite = siteProvider.sites.firstWhere(
       (s) => s.siteName == siteProvider.selectedSiteName,
       orElse: () => siteProvider.sites.isNotEmpty
@@ -171,6 +173,7 @@ class _SitesScreenState extends State<SitesScreen> {
   }
 
   Widget _buildSiteSelector(SiteProvider siteProvider, String? username) {
+    // Sites are already deduplicated in SiteProvider
     final index = siteProvider.sites.indexWhere(
       (s) => s.siteName == siteProvider.selectedSiteName,
     );
@@ -189,7 +192,6 @@ class _SitesScreenState extends State<SitesScreen> {
                 : () {
                     final newSite = siteProvider.sites[index - 1].siteName;
                     _onSiteSelected(newSite, username);
-                    print('   sites screen');
                   },
             enabled: !isFirst && username != null,
           ),

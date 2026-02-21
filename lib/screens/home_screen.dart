@@ -50,21 +50,29 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _loadMarkerIcons() async {
-    _redMarker = await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(size: Size(120, 120)),
+    _redMarker = await BitmapDescriptor.asset(
+      const ImageConfiguration(size: Size(90, 90)),
       'assets/map_marker_red.png',
+        width: 60,
+        height: 60
     );
-    _greenMarker = await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(size: Size(120, 120)),
+    _greenMarker = await BitmapDescriptor.asset(
+      const ImageConfiguration(size: Size(90, 90)),
       'assets/map_marker_green.png',
+        width: 60,
+        height: 60
     );
-    _yellowMarker = await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(size: Size(120, 120)),
+    _yellowMarker = await BitmapDescriptor.asset(
+      const ImageConfiguration(size: Size(90, 90)),
       'assets/map_marker_yellow.png',
+      width: 60,
+      height: 60
     );
-    _blueMarker = await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(size: Size(120, 120)),
+    _blueMarker = await BitmapDescriptor.asset(
+      const ImageConfiguration(size: Size(90, 90)),
       'assets/map_marker_blue.png',
+        width: 60,
+        height: 60
     );
     setState(() {
       _markersLoaded = true;
@@ -594,7 +602,7 @@ class _HomeScreenState extends State<HomeScreen> {
           GoogleMap(
             initialCameraPosition: const CameraPosition(
               target: LatLng(-28.8295, 132.4331),
-              zoom: 3.3,
+              zoom: 16.50,
             ),
             onMapCreated: (controller) {
               _mapController = controller;
@@ -609,6 +617,16 @@ class _HomeScreenState extends State<HomeScreen> {
             markers: _markers,
             mapType: _currentMapType,
             myLocationButtonEnabled: false,
+            myLocationEnabled: false,
+            // Hides + / - zoom buttons
+            zoomControlsEnabled: false,
+            // Hides compass button
+            compassEnabled: false,
+            // Hides Google Maps Toolbar (Directions/Open in Maps) on Android
+            mapToolbarEnabled: false,
+            // Hides Indoor floor picker
+            indoorViewEnabled: false,
+
           ),
           CustomInfoWindow(
             controller: _customInfoWindowController,
