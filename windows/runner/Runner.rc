@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.realtech.water365" "\0"
-            VALUE "FileDescription", "water365" "\0"
+            VALUE "CompanyName", "in.realtech.qwi365" "\0"
+            VALUE "FileDescription", "qwi365" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "water365" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.realtech.water365. All rights reserved." "\0"
-            VALUE "OriginalFilename", "water365.exe" "\0"
-            VALUE "ProductName", "water365" "\0"
+            VALUE "InternalName", "qwi365" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 in.realtech.qwi365. All rights reserved." "\0"
+            VALUE "OriginalFilename", "qwi365.exe" "\0"
+            VALUE "ProductName", "qwi365" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

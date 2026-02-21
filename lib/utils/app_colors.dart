@@ -1,17 +1,33 @@
+import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primaryOrange = Color(0xFFF9A700);
-  static const Color primaryBlue = Color(0xFF3498DB);
-  static const Color backgroundColor = Color(0xFF393D3E);
-  static const Color cardBackground = Color(0xFFE4E4E4);
-  static const Color inputBackground = Color(0xFF686868);
-  static const Color textColor = Colors.white;
-  static const Color secondaryTextColor = Color(0xFFBDBDBD);
-
-  static const Color dotGreen = Color(0xFF2ECC71);
-  static const Color dotYellow = Color(0xFFF1C40F);
-  static const Color dotRed = Color(0xFFE74C3C);
-  static const Color lightGrey = Color(0xFFDEDEDE);
-  static const Color logoutBg = Color(0xFF3F3F3C);
+  static const Color bgColor = Color(0xff393D3E);
+  static const Color whiteColor = Color(0xffffffff);
+  static const Color greyColor = Colors.grey;
+  static const Color orangeColor = Color(0xffFF9800);
+  static const Color black = Colors.black;
 }
+
+
+    // <item>7CADFF</item>
+    //     <item>EEFF41</item>
+    //     <item>6AFFDA</item>
+    //     <item>69F0AE</item>
+    //     <item>B2FF59</item>
+    //     <item>FF5252</item>
+    //     <item>FFEA00</item>
+    //     <item>4CAF50</item>
+    //     <item>FF9800</item>
+    //     <item>795548</item>
+    //     <item>03A9F4</item>
+    //     <item>9C27B0</item>
+    //     <item>00BCD4</item>
+    //     <item>CDDC39</item>
+    //     <item>673AB7</item>
+    //     <item>FFC107</item>
+    //     <item>E91E63</item>
+    //     <item>2962FF</item>
+    //     <item>004D40</item>
+    //     <item>154360</item>
+    //     <item>827717</item>
