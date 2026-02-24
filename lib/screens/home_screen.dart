@@ -94,8 +94,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final siteProvider = Provider.of<SiteProvider>(context, listen: false);
 
     if (authProvider.username != null) {
-      await siteProvider.fetchSites(authProvider.username!);
-      _updateMarkers(siteProvider);
+      try {
+        await siteProvider.fetchSites(authProvider.username!);
+        _updateMarkers(siteProvider);
+      } catch (e) {
+        debugPrint('Error fetching sites: $e');
+        // Don't show error to user during auto-refresh, just log it
+        // User can manually refresh if needed
+      }
     }
   }
 

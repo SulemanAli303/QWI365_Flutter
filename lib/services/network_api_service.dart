@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -13,10 +14,14 @@ class NetworkApiService extends BaseApiServices {
     try {
       final response = await http
           .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 20));
+          .timeout(const Duration(seconds: 60));
       responseJson = returnResponse(response);
     } on SocketException {
       throw NoInternetException('No Internet Connection');
+    } on TimeoutException {
+      throw FetchDataException('Request timeout - Server took too long to respond');
+    } catch (e) {
+      throw FetchDataException('Error: ${e.toString()}');
     }
     return responseJson;
   }
@@ -50,11 +55,15 @@ class NetworkApiService extends BaseApiServices {
             },
             body: soapBody,
           )
-          .timeout(const Duration(seconds: 20));
+          .timeout(const Duration(seconds: 30));
 
       responseJson = returnResponse(response);
     } on SocketException {
       throw NoInternetException('No Internet Connection');
+    } on TimeoutException {
+      throw FetchDataException('Request timeout - Server took too long to respond');
+    } catch (e) {
+      throw FetchDataException('Error: ${e.toString()}');
     }
 
     return responseJson;

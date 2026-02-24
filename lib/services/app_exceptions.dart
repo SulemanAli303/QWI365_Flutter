@@ -12,7 +12,7 @@ class AppException implements Exception {
 
 class FetchDataException extends AppException {
   FetchDataException([String? message])
-    : super(message, 'Error During Communication');
+      : super(message, 'Error During Communication');
 }
 
 class BadRequestException extends AppException {
@@ -21,7 +21,7 @@ class BadRequestException extends AppException {
 
 class UnauthorisedException extends AppException {
   UnauthorisedException([String? message])
-    : super(message, 'Unauthorised request');
+      : super(message, 'Unauthorised request');
 }
 
 class InvalidInputException extends AppException {
@@ -30,5 +30,11 @@ class InvalidInputException extends AppException {
 
 class NoInternetException extends AppException {
   NoInternetException([String? message])
-    : super(message, 'No Internet Connection');
+      : super(message, 'No Internet Connection');
 }
+
+class RequestTimeoutException extends AppException {
+  RequestTimeoutException([String? message])
+      : super(message, 'Request Timeout');
+}
+

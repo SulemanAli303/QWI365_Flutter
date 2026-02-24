@@ -62,6 +62,16 @@ class _SitesScreenState extends State<SitesScreen> {
               final firstSite = siteProvider.sites.first;
               _onSiteSelected(firstSite.siteName, username, moveCamera: true);
             }
+          }).catchError((error) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error loading sites: ${error.toString()}'),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 5),
+                ),
+              );
+            }
           });
         } else if (siteProvider.selectedSiteName == null) {
           final firstSite = siteProvider.sites.first;
@@ -97,10 +107,22 @@ class _SitesScreenState extends State<SitesScreen> {
     );
   }
 
-  void _fetchData(BuildContext context, String siteName, String username) {
+  void _fetchData(BuildContext context, String siteName, String username) async {
     final siteProvider = Provider.of<SiteProvider>(context, listen: false);
-    siteProvider.fetchDeviceDetails(siteName, username);
-    siteProvider.fetchAvailableWater(siteName);
+    try {
+      await siteProvider.fetchDeviceDetails(siteName, username);
+      await siteProvider.fetchAvailableWater(siteName);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading data: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   @override

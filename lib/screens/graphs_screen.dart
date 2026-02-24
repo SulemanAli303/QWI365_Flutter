@@ -57,7 +57,7 @@ class _GraphsScreenState extends State<GraphsScreen> {
     _fromDate = DateTime.now();
   }
 
-  void _fetchData() {
+  void _fetchData() async {
     final siteProvider = Provider.of<SiteProvider>(context, listen: false);
     final graphProvider = Provider.of<GraphProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -70,14 +70,26 @@ class _GraphsScreenState extends State<GraphsScreen> {
             site.deviceName!: site.deviceType!,
       };
 
-      graphProvider.fetchHistoricalGraph(
-        siteProvider.selectedSiteName!,
-        _dateFormat.format(_fromDate),
-        _dateFormat.format(_toDate),
-        username,
-        deviceTypeMap,
-      );
-      _updateMapMarker();
+      try {
+        await graphProvider.fetchHistoricalGraph(
+          siteProvider.selectedSiteName!,
+          _dateFormat.format(_fromDate),
+          _dateFormat.format(_toDate),
+          username,
+          deviceTypeMap,
+        );
+        _updateMapMarker();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading graph data: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
     }
   }
 
